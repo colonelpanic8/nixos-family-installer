@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -14,8 +15,13 @@ class PrepareTargetTests(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.source = self.base / "installer"
         self.source.mkdir()
-        (self.source / "flake.lock").write_text('{"version": 7}\n')
-        (self.source / "flake.nix").write_text("{ outputs = _: {}; }\n")
+        (self.source / "flake.lock").write_text(
+            '{"nodes": {"root": {}}, "root": "root", "version": 7}\n'
+        )
+        (self.source / "flake.nix").write_text(
+            "{\n inputs = {\n    self.submodules = true;\n };\n"
+            ' outputs = _: { value = "ready"; };\n}\n'
+        )
         (self.source / ".git").mkdir()
         (self.source / ".git/config").write_text("do not copy git state")
         self.root = self.base / "target"
@@ -51,6 +57,26 @@ class PrepareTargetTests(unittest.TestCase):
         self.assertEqual(request["requestedSecrets"], [])
         self.assertNotIn("PRIVATE KEY", json.dumps(request))
         self.assertEqual(key.stat().st_mode & 0o777, 0o600)
+
+    def test_installed_flake_url_survives_metadata_roundtrip(self):
+        self.prepare()
+        checkout = self.root / "srv/nixos-family-installer"
+        env = {
+            **os.environ,
+            "HOME": str(self.base / "home"),
+            "XDG_CACHE_HOME": str(self.base / "cache"),
+            "NIX_REMOTE": f"local?root={self.base}/store",
+            "NIX_CONFIG": "experimental-features = nix-command flakes\n",
+        }
+        metadata = json.loads(
+            subprocess.check_output(
+                ["nix", "flake", "metadata", "--json", str(checkout)], env=env, text=True
+            )
+        )
+        value = subprocess.check_output(
+            ["nix", "eval", "--raw", metadata["url"] + "#value"], env=env, text=True
+        )
+        self.assertEqual(value, "ready")
 
     def test_retry_keeps_permanent_host_identity(self):
         self.prepare()

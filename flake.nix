@@ -112,7 +112,7 @@
             alejandra --check ${./flake.nix} ${./modules} ${./dotfiles/nixos/profiles/installer-user.nix}
             touch "$out"
           '';
-          helper = pkgs.runCommand "installer-helper-tests" {nativeBuildInputs = [python pkgs.openssh];} ''
+          helper = pkgs.runCommand "installer-helper-tests" {nativeBuildInputs = [python pkgs.openssh pkgs.nix];} ''
             cp -r ${./scripts} scripts
             cp -r ${./tests} tests
             cp -r ${./calamares} calamares

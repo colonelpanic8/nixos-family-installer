@@ -57,6 +57,11 @@ def prepare_target(source, root, username, hostname, owner):
         for name in files:
             path = Path(directory) / name
             path.chmod(path.stat().st_mode | 0o200)
+    flake = destination / "flake.nix"
+    # Submodules are already materialized; this Git hint breaks path URL round trips.
+    flake.write_text(
+        re.sub(r"(?m)^[ \t]*self\.submodules[ \t]*=[ \t]*true;[ \t]*\n", "", flake.read_text())
+    )
     machine = destination / "machines" / hostname
     machine.mkdir(parents=True, exist_ok=True)
     for name in ("configuration.nix", "hardware-configuration.nix"):

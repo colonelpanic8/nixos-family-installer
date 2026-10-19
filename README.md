@@ -63,6 +63,10 @@ The machine definition preserves the generated boot, disk, locale and account
 settings. Personal preference files come from immutable release source, so a
 separate Git pull cannot silently change them.
 
+The exported target flake omits the checkout's `self.submodules` hint: the
+submodule files are already present, and Nix rejects that hint in local path
+URLs produced by `nixos-install`.
+
 ## Registration and conservative updates
 
 The first installation works without secret approval or a merged machine PR.
