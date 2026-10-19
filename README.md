@@ -27,7 +27,7 @@ Selecting Ivan is a preference choice, not authentication or secret approval.
 Nix 2.27+ is required for `inputs.self.submodules`.
 
 ```sh
-git clone --recurse-submodules <installer-repository>
+git clone --recurse-submodules https://github.com/colonelpanic8/nixos-family-installer.git
 cd nixos-family-installer
 direnv allow
 direnv exec . just check
@@ -48,6 +48,21 @@ archive fetches do not include submodules.
    even when selecting Ivan.
 3. Choose the desktop, disks and encryption through the normal installer pages.
 4. Complete installation and reboot.
+
+For remote help, open Konsole on the live desktop and run:
+
+```sh
+sudo tailscale up
+sudo passwd nixos
+tailscale ip -4
+```
+
+Complete the Tailscale login and approve the device under the intended support
+policy from your trusted workstation. Connect with `ssh nixos@<tailscale-ip>`
+using the temporary live-session password. This provides shell access while
+the person at the machine uses Calamares; graphical screen sharing is not
+configured. Persistent Tailscale and SSH access must be configured separately
+in the reviewed machine module.
 
 The target contains:
 
@@ -85,8 +100,7 @@ enable `familyInstaller.updates.enable` in that machine's module and activate
 that release through the approved deployment procedure. Updates honor the
 release lockfile, run daily with jitter, retain boot entries, and do not reboot
 automatically. `familyInstaller.updates.source` can point to another Git remote
-or release ref. The default URL is the intended repository location, not an
-assertion that the repository has already been published.
+or release ref.
 
 Tailscale is available on the live media for support. Automatic enrollment,
 policy management, secret re-encryption and authenticated PR creation are not
@@ -102,6 +116,16 @@ dotfiles version pin; there is no second flake input tracking another revision.
 Run the profile checks and VM installation before promoting `family-stable`.
 Other flake dependencies are independently pinned in `flake.lock` on NixOS and
 Home Manager 26.05.
+
+## Verification
+
+The installer has passed its formatting, lint, Python behavior tests, and Nix
+flake checks. An x86_64 VM completed the graphical Plasma installation with a
+non-Ivan account, UEFI and LUKS2 encryption, then rebooted from the installed
+disk and accepted the chosen disk and account passwords. Checks in the running
+system verified the local flake, shared tools, generated host identity, empty
+secret request, disabled updates before registration, and personal-data
+exclusions. Physical hardware and other desktop choices still need testing.
 
 The repository's original code is MIT licensed. Bundled NixOS, Calamares and
 other dependencies retain their respective upstream licenses.
