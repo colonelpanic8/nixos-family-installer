@@ -10,7 +10,9 @@ class PatchTests(unittest.TestCase):
     def test_preserves_partition_mount_users_and_unmount_jobs(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory)
-            (source / "config").mkdir()
+            (source / "config/modules").mkdir(parents=True)
+            users = source / "config/modules/users.conf"
+            users.write_text("hostname:\n  location: None\n  forbidden_names: [ localhost ]\n")
             (source / "modules/nixos").mkdir(parents=True)
             settings = source / "config/settings.conf"
             settings.write_text(
@@ -27,7 +29,7 @@ class PatchTests(unittest.TestCase):
             patch(source, "/nix/store/helper/bin/family-prepare-target")
             self.assertIn("  - packagechooser@owner\n  - users", settings.read_text())
             self.assertIn(
-                "  - partition\n  - mount\n  - nixos\n  - users\n  - umount\n",
+                "  - family-validate\n  - partition\n  - mount\n  - nixos\n  - users\n  - umount\n",
                 settings.read_text(),
             )
             text = job.read_text()
@@ -36,6 +38,8 @@ class PatchTests(unittest.TestCase):
             self.assertIn('gs.value("username")', text)
             self.assertIn('gs.value("packagechooser_owner")', text)
             self.assertIn('"--finish"', text)
+            self.assertIn("location: EtcFile", users.read_text())
+            self.assertIn("localhost, installer", users.read_text())
 
     def test_upstream_layout_change_fails_loudly(self):
         with tempfile.TemporaryDirectory() as directory:

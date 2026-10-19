@@ -22,7 +22,17 @@ def patch(source, helper):
     text = replace_once(
         text, "  - keyboard\n  - users\n", "  - keyboard\n  - packagechooser@owner\n  - users\n"
     )
+    text = replace_once(
+        text, "- exec:\n  - partition\n", "- exec:\n  - family-validate\n  - partition\n"
+    )
     settings.write_text(text)
+
+    users = source / "config/modules/users.conf"
+    text = replace_once(users.read_text(), "  location: None\n", "  location: EtcFile\n")
+    text = replace_once(
+        text, "  forbidden_names: [ localhost ]", "  forbidden_names: [ localhost, installer ]"
+    )
+    users.write_text(text)
 
     job = source / "modules/nixos/main.py"
     text = job.read_text()

@@ -19,8 +19,13 @@
       postPatch =
         (old.postPatch or "")
         + ''
-          python3 ${../scripts/patch_calamares.py} . ${lib.getExe prepareTarget}
-          cp ${../calamares/owner.conf} config/modules/family-owner.conf
+                  python3 ${../scripts/patch_calamares.py} . ${lib.getExe prepareTarget}
+          cp -r ${../calamares/family-validate} modules/family-validate
+          chmod -R u+w modules/family-validate
+          substituteInPlace modules/family-validate/main.py \
+            --replace-fail @helper@ ${lib.getExe prepareTarget}
+                  cp ${../calamares/owner.conf} config/modules/family-owner.conf
+              cp ${../calamares/user.svg} branding/nixos/images/family-user.svg
         '';
     });
 in {

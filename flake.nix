@@ -115,10 +115,11 @@
           helper = pkgs.runCommand "installer-helper-tests" {nativeBuildInputs = [python pkgs.openssh];} ''
             cp -r ${./scripts} scripts
             cp -r ${./tests} tests
+            cp -r ${./calamares} calamares
             cp ${./pyproject.toml} pyproject.toml
             export PYTHONPATH=$PWD/scripts
-            ruff check scripts tests
-            ruff format --check scripts tests
+            ruff check scripts tests calamares
+            ruff format --check scripts tests calamares
             python -m unittest discover -s tests -v
             touch "$out"
           '';

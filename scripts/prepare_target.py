@@ -10,10 +10,16 @@ import subprocess
 
 
 def validate_identity(username, hostname, owner):
-    if not re.fullmatch(r"[a-z_][a-z0-9_-]{0,30}", username) or username == "root":
+    if (
+        len(username) > 31
+        or not re.fullmatch(r"[a-z_][a-z0-9_-]*\$?", username)
+        or username in {"root", "nobody"}
+    ):
         raise ValueError("Choose a regular lowercase login name, not root")
-    if hostname == "installer" or not re.fullmatch(r"[a-z][a-z0-9-]{0,61}[a-z0-9]|[a-z]", hostname):
-        raise ValueError("Choose a lowercase hostname using letters, digits, and hyphens")
+    if hostname.lower() in {"localhost", "installer"} or not re.fullmatch(
+        r"[A-Za-z0-9](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9])?", hostname
+    ):
+        raise ValueError("Use a computer name starting and ending with a letter or digit")
     if owner not in {"ivan", "other"}:
         raise ValueError("Choose Ivan or Another person")
 
@@ -115,17 +121,27 @@ def finish_target(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("source", "root"):
-        parser.add_argument(f"--{name}", required=True)
-    for name in ("username", "hostname", "owner"):
+    parser.add_argument("--source", required=True)
+    for name in ("root", "username", "hostname", "owner"):
         parser.add_argument(f"--{name}")
     parser.add_argument("--finish", action="store_true")
+    parser.add_argument("--validate", action="store_true")
     args = parser.parse_args()
     if args.finish:
+        if not args.root:
+            parser.error("--root is required to finish installation")
         finish_target(Path(args.root))
         return
     if not all((args.username, args.hostname, args.owner)):
         parser.error("--username, --hostname and --owner are required for preparation")
+    try:
+        validate_identity(args.username, args.hostname, args.owner)
+    except ValueError as error:
+        parser.error(str(error))
+    if args.validate:
+        return
+    if not args.root:
+        parser.error("--root is required for preparation")
     print(
         prepare_target(Path(args.source), Path(args.root), args.username, args.hostname, args.owner)
     )

@@ -96,11 +96,17 @@ class PrepareTargetTests(unittest.TestCase):
             {"username": "root"},
             {"username": "../escape"},
             {"hostname": "../escape"},
+            {"hostname": "trailing-hyphen-"},
+            {"hostname": "installer"},
             {"owner": "unknown"},
         ):
             with self.subTest(args=args), self.assertRaises(ValueError):
                 self.prepare(**args)
         self.assertFalse((self.root / "srv").exists())
+
+    def test_accepts_valid_mixed_case_computer_names(self):
+        self.prepare(hostname="Dads-PC2")
+        self.assertTrue((self.root / "srv/nixos-family-installer/machines/Dads-PC2").is_dir())
 
     def test_refuses_to_overwrite_an_existing_checkout(self):
         checkout = self.root / "srv/nixos-family-installer"

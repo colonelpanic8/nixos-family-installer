@@ -44,7 +44,8 @@ archive fetches do not include submodules.
 
 1. Boot the ISO and connect through the normal desktop network applet.
 2. Open the graphical installer. Select the owner, then create the primary
-   account. The login name can differ from `imalison` even when selecting Ivan.
+   account and name the computer. The login name can differ from `imalison`
+   even when selecting Ivan.
 3. Choose the desktop, disks and encryption through the normal installer pages.
 4. Complete installation and reboot.
 

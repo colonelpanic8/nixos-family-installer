@@ -3,14 +3,14 @@ default:
 
 fmt:
     alejandra flake.nix modules
-    ruff format scripts tests
+    ruff format scripts tests calamares
 
 fmt-check:
     alejandra --check flake.nix modules
-    ruff format --check scripts tests
+    ruff format --check scripts tests calamares
 
 lint:
-    ruff check scripts tests
+    ruff check scripts tests calamares
 
 test:
     PYTHONPATH=scripts python -m unittest discover -s tests -v
