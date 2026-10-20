@@ -33,13 +33,15 @@
     ) (builtins.attrNames (builtins.readDir ./machines));
     iso = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs.installerSource = self.outPath;
       modules = [./modules/iso.nix];
     };
   in
     {
       lib = {inherit mkMachine;};
-      nixosModules.default = ./modules/managed-system.nix;
+      nixosModules = {
+        default = ./modules/managed-system.nix;
+        installer = ./modules/calamares.nix;
+      };
       nixosConfigurations =
         (builtins.listToAttrs (map (name: {
             inherit name;
@@ -92,6 +94,28 @@
             primaryUser = cfg.myModules.primaryUser;
             failures = map (a: a.message) (builtins.filter (a: !a.assertion) cfg.assertions);
           });
+      rescueConfig =
+        (nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./modules/calamares.nix
+            ({...}: {
+              boot.isContainer = true;
+              system.stateVersion = "26.05";
+              users.users.rescue-operator.isNormalUser = true;
+            })
+          ];
+        }).config;
+      rescueCheck = assert !(rescueConfig ? isoImage);
+      assert !rescueConfig.services.desktopManager.plasma6.enable;
+      assert !rescueConfig.services.displayManager.autoLogin.enable;
+      assert rescueConfig.programs.partition-manager.enable;
+      assert builtins.attrNames (nixpkgs.lib.filterAttrs (_: user: user.isNormalUser) rescueConfig.users.users) == ["rescue-operator"];
+      assert builtins.all (a: a.assertion) rescueConfig.assertions;
+        pkgs.writeText "rescue-installer-module-check" (builtins.toJSON {
+          guide = rescueConfig.environment.etc."nixos-family-installer/README.md".source;
+          extensions = rescueConfig.system.build.familyCalamaresExtensions;
+        });
       updateConfig = (testMachine "other" true).config;
       recordUpgrade = pkgs.writeShellScript "record-upgrade" ''
         printf '%s\n' "$@" > "$out"
@@ -127,6 +151,7 @@
         // nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
           other-user = profileCheck "other";
           ivan-user = profileCheck "ivan";
+          rescue-module = rescueCheck;
           update-command = pkgs.runCommand "update-command" {} ''
             ${upgradeScript}
             test "$(sed -n '4p' "$out")" = '${updateConfig.system.autoUpgrade.flake}'

@@ -1,4 +1,17 @@
-# Project scope
+# Agent instructions
+
+Read [README.md](README.md) before assisting with installation, remote support,
+registration, updates, or recovery. It is the operating guide for both the
+person at the computer and an assisting agent. Start with its
+[agent instructions](README.md#instructions-for-an-assisting-agent), then use
+the section for the current stage. Establish which computer and environment
+you are controlling before running commands.
+
+On combined rescue media, this guide and README are installed under
+`/etc/nixos-family-installer`. On a family target, the source copy is under
+`/srv/nixos-family-installer`. Follow local machine instructions as well.
+
+## Project scope
 
 This repository builds a Calamares NixOS installer. `dotfiles/` is a pinned
 Git submodule, consumed as source files, never by evaluating its workstation
@@ -7,7 +20,8 @@ is independent of the login name.
 
 ## Structure
 
-- `modules/iso.nix`: graphical media and package override.
+- `modules/iso.nix`: standalone graphical media.
+- `modules/calamares.nix`: reusable installer, package override, and support guide.
 - `calamares/owner.conf`: owner selection page.
 - `scripts/patch_calamares.py`: narrow, checked patch against pinned upstream.
 - `scripts/prepare_target.py`: copy release source, preserve generated hardware

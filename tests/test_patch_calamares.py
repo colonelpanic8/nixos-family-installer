@@ -22,11 +22,14 @@ class PatchTests(unittest.TestCase):
             )
             job = source / "modules/nixos/main.py"
             job.write_text(
+                "def target_version():\n"
+                '    version = ".".join(subprocess.getoutput(["nixos-version"]).split(".")[:2])[:5]\n'
+                "    return version\n"
                 "def run():\n    # build nixos-install command\n"
                 '    nixosInstallCmd = [\n            "--no-root-passwd",\n    ]\n'
                 "    libcalamares.job.setprogress(INSTALL_PROGRESS_END)\n"
             )
-            patch(source, "/nix/store/helper/bin/family-prepare-target")
+            patch(source, "/nix/store/helper/bin/family-prepare-target", "26.05")
             self.assertIn("  - packagechooser@owner\n  - users", settings.read_text())
             self.assertIn(
                 "  - family-validate\n  - partition\n  - mount\n  - nixos\n  - users\n  - umount\n",
@@ -34,6 +37,9 @@ class PatchTests(unittest.TestCase):
             )
             text = job.read_text()
             ast.parse(text)
+            namespace = {}
+            exec(compile(text, str(job), "exec"), namespace)
+            self.assertEqual(namespace["target_version"](), "26.05")
             self.assertIn('"--flake"', text)
             self.assertIn('gs.value("username")', text)
             self.assertIn('gs.value("packagechooser_owner")', text)
@@ -47,7 +53,7 @@ class PatchTests(unittest.TestCase):
             (source / "config").mkdir()
             (source / "config/settings.conf").write_text("new upstream format")
             with self.assertRaisesRegex(ValueError, "integration point"):
-                patch(source, "/helper")
+                patch(source, "/helper", "26.05")
 
 
 if __name__ == "__main__":

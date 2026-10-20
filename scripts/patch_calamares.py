@@ -11,7 +11,7 @@ def replace_once(text, old, new):
     return text.replace(old, new, 1)
 
 
-def patch(source, helper):
+def patch(source, helper, target_release):
     settings = source / "config/settings.conf"
     text = settings.read_text()
     text = replace_once(
@@ -35,7 +35,11 @@ def patch(source, helper):
     users.write_text(text)
 
     job = source / "modules/nixos/main.py"
-    text = job.read_text()
+    text = replace_once(
+        job.read_text(),
+        '    version = ".".join(subprocess.getoutput(["nixos-version"]).split(".")[:2])[:5]',
+        f"    version = {json.dumps(target_release)}",
+    )
     preparation = f"""    try:
         family_flake = subprocess.check_output(
             ["pkexec", {json.dumps(helper)}, "--root", root_mount_point,
@@ -75,4 +79,4 @@ def patch(source, helper):
 
 
 if __name__ == "__main__":
-    patch(Path(sys.argv[1]), sys.argv[2])
+    patch(Path(sys.argv[1]), sys.argv[2], sys.argv[3])
