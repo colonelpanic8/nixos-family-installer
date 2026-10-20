@@ -110,6 +110,8 @@
       assert !rescueConfig.services.desktopManager.plasma6.enable;
       assert !rescueConfig.services.displayManager.autoLogin.enable;
       assert rescueConfig.programs.partition-manager.enable;
+      assert rescueConfig.security.polkit.enable;
+      assert rescueConfig.security.wrappers.pkexec.enable;
       assert builtins.attrNames (nixpkgs.lib.filterAttrs (_: user: user.isNormalUser) rescueConfig.users.users) == ["rescue-operator"];
       assert builtins.all (a: a.assertion) rescueConfig.assertions;
         pkgs.writeText "rescue-installer-module-check" (builtins.toJSON {
