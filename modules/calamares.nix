@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  options,
   ...
 }: let
   targetRelease = lib.removePrefix "nixos-" (builtins.fromJSON (builtins.readFile ../flake.lock)).nodes.nixpkgs.original.ref;
@@ -10,6 +11,23 @@
     text = ''
       exec python3 ${../scripts/prepare_target.py} --source ${../.} "$@"
     '';
+  };
+  launchInstaller = pkgs.writeShellApplication {
+    name = "family-installer";
+    runtimeInputs = [pkgs.xorg.xhost];
+    text = ''
+      if [[ -n "''${WAYLAND_DISPLAY:-}" && -n "''${DISPLAY:-}" ]]; then
+        xhost +si:localuser:root >/dev/null
+      fi
+      exec /run/wrappers/bin/pkexec ${pkgs.calamares-nixos}/bin/calamares "$@"
+    '';
+  };
+  installerDesktop = pkgs.makeDesktopItem {
+    name = "calamares";
+    desktopName = "Install System";
+    exec = lib.getExe launchInstaller;
+    icon = "calamares";
+    categories = ["System"];
   };
   customizeExtensions = package:
     package.overrideAttrs (old: {
@@ -34,8 +52,15 @@ in {
   ];
   nix.settings.experimental-features = ["nix-command" "flakes"];
   programs.partition-manager.enable = true;
+  security.polkit =
+    {enable = true;}
+    // lib.optionalAttrs (options.security.polkit ? enablePkexecWrapper) {
+      enablePkexecWrapper = true;
+    };
   i18n.supportedLocales = ["all"];
   environment.systemPackages = [
+    (lib.hiPrio installerDesktop)
+    launchInstaller
     pkgs.calamares-nixos
     pkgs.calamares-nixos-extensions
     pkgs.glibcLocales
@@ -44,5 +69,6 @@ in {
   ];
   environment.etc."nixos-family-installer/README.md".source = ../README.md;
   environment.etc."nixos-family-installer/AGENTS.md".source = ../AGENTS.md;
+  system.build.familyInstallerLauncher = launchInstaller;
   system.build.familyCalamaresExtensions = pkgs.calamares-nixos-extensions;
 }

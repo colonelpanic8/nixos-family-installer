@@ -140,7 +140,7 @@ before changing its firmware settings.
 A family ISO reaches a Plasma desktop. Open **Install System** if Calamares
 does not open automatically. A combined rescue build reaches Hyprland; open
 its application launcher with Super+P and choose **Install System**, or run
-`calamares` from Ghostty with Super+Shift+Return.
+`family-installer` from Ghostty with Super+Shift+Return.
 
 ## Connect a remote helper
 
@@ -395,6 +395,12 @@ live account, network access, device approval, and tailnet policy. Do not
 resolve a connection failure by granting the machine broad secret access.
 
 ### Calamares reports an error
+
+Launch through **Install System** or `family-installer`. The launcher uses the
+privileged wrapper and permits the local root user to display the installer
+on Xwayland. Running the bare `calamares` binary as an ordinary user cannot
+complete privileged disk operations. A `pkexec must be setuid root` error on
+older combined media requires rebuilding with the current installer module.
 
 Keep the live environment running. Use **Toggle log** and inspect the session
 log. In the tested family ISO, the privileged session log was at
